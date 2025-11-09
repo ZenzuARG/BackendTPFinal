@@ -1,20 +1,62 @@
 <section class="home-container">
   <h2>🛒 Catálogo de productos</h2>
 
+  <form method="get" action="/products" class="filters">
+    <label>
+      Categoría / query:
+      <input type="text" name="query" value="{{query}}">
+    </label>
+    <label>
+      Orden:
+      <select name="sort">
+        <option value="" {{#unless sort}}selected{{/unless}}>Sin orden</option>
+        <option value="asc" {{#if (eq sort "asc")}}selected{{/if}}>Precio asc</option>
+        <option value="desc" {{#if (eq sort "desc")}}selected{{/if}}>Precio desc</option>
+      </select>
+    </label>
+    <label>
+      Por página:
+      <input type="number" name="limit" value="10" min="1">
+    </label>
+    <button type="submit">Aplicar</button>
+  </form>
+
   {{#if products.length}}
     <div class="product-grid">
       {{#each products}}
         <div class="product-card">
-          <h3>{{title}}</h3>
-          <p class="desc">{{description}}</p>
-          <p><strong>Precio:</strong> ${{price}}</p>
-          <p><strong>Stock:</strong> {{stock}}</p>
-          <p><strong>Categoría:</strong> {{category}}</p>
-          <p><strong>ID:</strong> <code>{{id}}</code></p>
+          <h3>{{this.title}}</h3>
+          <p class="desc">{{this.description}}</p>
+          <p><strong>Precio:</strong> ${{this.price}}</p>
+          <p><strong>Stock:</strong> {{this.stock}}</p>
+          <p><strong>Categoría:</strong> {{this.category}}</p>
+
+          <a href="/products/{{this._id}}">Ver detalle</a>
+
+          <form method="post" action="/api/carts/{{../cartId}}/product/{{this._id}}">
+            <input type="hidden" name="quantity" value="1" />
+            <button type="submit">Agregar al carrito</button>
+          </form>
         </div>
       {{/each}}
     </div>
+
+    <nav class="pagination">
+      {{#if hasPrevPage}}
+        <a href="{{prevLink}}">⬅ Página anterior</a>
+      {{/if}}
+
+      <span>Página {{page}} de {{totalPages}}</span>
+
+      {{#if hasNextPage}}
+        <a href="{{nextLink}}">Página siguiente ➡</a>
+      {{/if}}
+    </nav>
   {{else}}
     <p class="empty">No hay productos aún 😔</p>
   {{/if}}
+
+  <p>
+    <a href="/mycart">Ver mi carrito</a>
+  </p>
 </section>

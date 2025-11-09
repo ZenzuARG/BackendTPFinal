@@ -3,48 +3,58 @@ import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { engine } from 'express-handlebars';
 import path from 'path';
+import cookieParser from 'cookie-parser';
+
 import productsRouter from './src/routes/products.router.js';
 import cartsRouter from './src/routes/carts.router.js';
 import viewsRouter from './src/routes/views.router.js';
 import ProductManager from './src/managers/ProductManager.js';
+import { connectDB } from './src/config/db.js';
 
 const __dirname = path.resolve();
 const app = express();
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer);
 
-// Hacemos io accesible en rutas HTTP:
-app.set('io', io);
+// Conexión a Mongo
+await connectDB();
 
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // 👈 cookie para cartId
 app.use('/static', express.static(path.join(__dirname, 'public')));
 
 // Handlebars
-app.engine('handlebars', engine());
+app.engine('handlebars', engine({
+  helpers: {
+    eq(a, b) { return a === b; }
+  }
+}));
 app.set('view engine', 'handlebars');
 app.set('views', path.join(__dirname, 'views'));
 
-// Routers
+// Guardamos io para usar en los routers
+app.set('io', io);
+
+// Rutas
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartsRouter);
 app.use('/', viewsRouter);
 
-app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+// Socket.IO realtime
+const pm = new ProductManager();
 
-// Sockets – también permitimos crear/eliminar por WS (sugerido por la consigna)
-const pm = new ProductManager(__dirname);
 io.on('connection', async (socket) => {
-  const products = await pm.getAll();
-  socket.emit('products:update', products);
+  console.log('Cliente conectado a WS');
+  socket.emit('products:update', await pm.getAll());
 
-  socket.on('product:create', async (body, cb) => {
+  socket.on('product:create', async (data, cb) => {
     try {
-      const created = await pm.create(body);
+      const created = await pm.create(data);
       const list = await pm.getAll();
       io.emit('products:update', list);
-      cb && cb({ ok: true, created });
+      cb && cb({ ok: true, product: created });
     } catch (err) {
       cb && cb({ ok: false, error: err.message });
     }
@@ -63,4 +73,6 @@ io.on('connection', async (socket) => {
 });
 
 const PORT = 8080;
-httpServer.listen(PORT, () => console.log(`Servidor listo en http://localhost:${PORT}`));
+httpServer.listen(PORT, () => {
+  console.log(`Servidor listo en http://localhost:${PORT}`);
+});

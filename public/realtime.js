@@ -12,7 +12,7 @@ function render(list){
   }
   list.forEach(p => {
     const li = document.createElement('li');
-    li.innerHTML = `<strong>${p.title}</strong> – $${p.price} – stock: ${p.stock} – id: <code>${p.id}</code>`;
+    li.innerHTML = `<strong>${p.title}</strong> – $${p.price} – stock: ${p.stock} – id: <code>${p._id}</code>`;
     listEl.appendChild(li);
   });
 }

@@ -1,0 +1,63 @@
+<section class="cart-page">
+  <header class="cart-page__header">
+    <div>
+      <h1>Carrito</h1>
+      <p class="cart-page__subtitle">Revisá tus productos antes de finalizar.</p>
+    </div>
+    <span class="cart-page__id">ID: {{cartId}}</span>
+  </header>
+
+  {{#if items.length}}
+    <div class="cart-layout">
+      <div class="cart-items card">
+        <table class="cart-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="cart-table__right">Precio</th>
+              <th class="cart-table__center">Cantidad</th>
+              <th class="cart-table__right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each items}}
+              <tr>
+                <td>{{this.title}}</td>
+                <td class="cart-table__right">${{this.price}}</td>
+                <td class="cart-table__center">{{this.quantity}}</td>
+                <td class="cart-table__right">${{this.subtotal}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      <aside class="cart-summary card">
+        <h2>Resumen</h2>
+        <p class="cart-summary__text">
+          Tenés <strong>{{items.length}}</strong> producto{{#unless (eq items.length 1)}}s{{/unless}} en el carrito.
+        </p>
+        <p class="cart-summary__total">
+          Total a pagar:
+          <span class="cart-summary__badge">${{total}}</span>
+        </p>
+
+        <div class="cart-summary__actions">
+          <a href="/products" class="btn btn-secondary">⬅ Seguir comprando</a>
+          <button type="button" class="btn btn-primary" disabled>
+            Finalizar compra (demo)
+          </button>
+        </div>
+
+        <p class="cart-summary__note">
+          * La finalización de compra no es parte de esta entrega, se deja solo a modo demostrativo.
+        </p>
+      </aside>
+    </div>
+  {{else}}
+    <div class="card cart-empty">
+      <p>Tu carrito está vacío.</p>
+      <a href="/products" class="btn btn-primary">Ir al catálogo</a>
+    </div>
+  {{/if}}
+</section>

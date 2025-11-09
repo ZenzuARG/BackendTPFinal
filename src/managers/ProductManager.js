@@ -1,80 +1,81 @@
-import { readJSON, writeJSON, ensureFile } from '../utils/fileStore.js';
-import path from 'path';
-import crypto from 'crypto';
+import { ProductModel } from '../dao/models/product.model.js';
 
 export default class ProductManager {
-  constructor(baseDir = path.resolve()) {
-    this.file = path.join(baseDir, 'data', 'products.json');
-    ensureFile(this.file);
+  async getAll() {
+    return ProductModel.find().lean();
   }
-
-  #newId() { return crypto.randomUUID(); }
-
-  async getAll() { return readJSON(this.file); }
 
   async getById(id) {
-    const list = await this.getAll();
-    return list.find(p => p.id === id) || null;
+    return ProductModel.findById(id).lean();
   }
 
-  #validate(body, { partial = false } = {}) {
-    const allowed = ['title', 'description', 'code', 'price', 'status', 'stock', 'category', 'thumbnails'];
-    for (const k of Object.keys(body || {})) {
-      if (!allowed.includes(k)) throw new Error(`Campo no permitido: ${k}`);
-    }
-    if (!partial) {
-      const required = ['title','description','code','price','stock','category'];
-      for (const r of required) {
-        if (body[r] === undefined || body[r] === null || body[r] === '') {
-          throw new Error(`Falta campo requerido: ${r}`);
-        }
-      }
-    }
-    const payload = {};
-    payload.title = body.title?.toString();
-    payload.description = body.description?.toString();
-    payload.code = body.code?.toString();
-    if (body.price !== undefined) payload.price = Number(body.price);
-    if (body.status !== undefined) payload.status = Boolean(body.status);
-    if (body.stock !== undefined) payload.stock = Number(body.stock);
-    payload.category = body.category?.toString();
-    if (body.thumbnails !== undefined) {
-      if (!Array.isArray(body.thumbnails)) throw new Error('thumbnails debe ser arreglo de strings');
-      payload.thumbnails = body.thumbnails.map(String);
-    }
-    return payload;
+  async create(data) {
+    const doc = await ProductModel.create(data);
+    return doc.toObject();
   }
 
-  async create(body) {
-    const list = await this.getAll();
-    const payload = this.#validate(body);
-    payload.status = payload.status ?? true;
-    payload.thumbnails = payload.thumbnails ?? [];
-    if (list.some(p => p.code === payload.code)) throw new Error('Ya existe un producto con ese code');
-    const prod = { id: this.#newId(), ...payload };
-    list.push(prod);
-    await writeJSON(this.file, list);
-    return prod;
-  }
-
-  async update(id, body) {
-    const list = await this.getAll();
-    const idx = list.findIndex(p => p.id === id);
-    if (idx === -1) return null;
-    if ('id' in body) delete body.id;
-    const payload = this.#validate(body, { partial: true });
-    const updated = { ...list[idx], ...payload };
-    list[idx] = updated;
-    await writeJSON(this.file, list);
+  async update(id, data) {
+    const updated = await ProductModel.findByIdAndUpdate(
+      id,
+      data,
+      { new: true, runValidators: true }
+    ).lean();
     return updated;
   }
 
   async delete(id) {
-    const list = await this.getAll();
-    const idx = list.findIndex(p => p.id === id);
-    if (idx === -1) return false;
-    list.splice(idx, 1);
-    await writeJSON(this.file, list);
-    return true;
+    const res = await ProductModel.findByIdAndDelete(id);
+    return !!res;
+  }
+
+  /**
+   * Paginación + filtros + orden
+   * query: string -> categoría o 'available'
+   * sort: 'asc' | 'desc' sobre price
+   */
+  async paginate({ limit = 10, page = 1, query, sort }) {
+    const limitNum = Number(limit) > 0 ? Number(limit) : 10;
+    const pageNum = Number(page) > 0 ? Number(page) : 1;
+
+    const filter = {};
+    if (query) {
+      if (query === 'available') {
+        filter.stock = { $gt: 0 };
+      } else {
+        // usamos query como categoría
+        filter.category = query;
+      }
+    }
+
+    const sortOpt = {};
+    if (sort === 'asc') sortOpt.price = 1;
+    if (sort === 'desc') sortOpt.price = -1;
+
+    const skip = (pageNum - 1) * limitNum;
+
+    const [docs, totalDocs] = await Promise.all([
+      ProductModel.find(filter)
+        .sort(sortOpt)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      ProductModel.countDocuments(filter)
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(totalDocs / limitNum));
+    const hasPrevPage = pageNum > 1;
+    const hasNextPage = pageNum < totalPages;
+
+    return {
+      status: 'success',
+      payload: docs,
+      totalPages,
+      prevPage: hasPrevPage ? pageNum - 1 : null,
+      nextPage: hasNextPage ? pageNum + 1 : null,
+      page: pageNum,
+      hasPrevPage,
+      hasNextPage
+      // prevLink y nextLink los arma el router con la URL real
+    };
   }
 }

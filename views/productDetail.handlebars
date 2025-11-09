@@ -1,0 +1,51 @@
+<section class="product-detail">
+  <article class="product-detail__card card">
+    <div class="product-detail__info">
+      <h1 class="product-detail__title">{{product.title}}</h1>
+      <p class="product-detail__category">{{product.category}}</p>
+
+      <p class="product-detail__description">
+        {{product.description}}
+      </p>
+
+      <dl class="product-detail__meta">
+        <div>
+          <dt>Precio</dt>
+          <dd>${{product.price}}</dd>
+        </div>
+        <div>
+          <dt>Stock disponible</dt>
+          <dd>{{product.stock}}</dd>
+        </div>
+        <div>
+          <dt>Estado</dt>
+          <dd>{{#if product.status}}Disponible{{else}}No disponible{{/if}}</dd>
+        </div>
+      </dl>
+
+      <a href="/products" class="btn btn-secondary">⬅ Volver al catálogo</a>
+    </div>
+
+    <div class="product-detail__purchase">
+      <h2>Agregar al carrito</h2>
+      <p class="product-detail__price">
+        ${{product.price}}
+      </p>
+
+      <form method="post" action="/api/carts/{{cartId}}/product/{{product._id}}" class="product-detail__form">
+        <label>
+          Cantidad
+          <input type="number" name="quantity" value="1" min="1">
+        </label>
+
+        <button type="submit" class="btn btn-primary">
+          Añadir al carrito
+        </button>
+      </form>
+
+      <p class="product-detail__hint">
+        Al agregar, te llevamos directo a tu carrito para que veas el resumen.
+      </p>
+    </div>
+  </article>
+</section>

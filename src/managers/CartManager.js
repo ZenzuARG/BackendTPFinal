@@ -1,40 +1,80 @@
-import { readJSON, writeJSON, ensureFile } from '../utils/fileStore.js';
-import path from 'path';
-import crypto from 'crypto';
+import { CartModel } from '../dao/models/cart.model.js';
 
 export default class CartManager {
-  constructor(baseDir = path.resolve()) {
-    this.file = path.join(baseDir, 'data', 'carts.json');
-    ensureFile(this.file);
+  async create() {
+    const cart = await CartModel.create({ products: [] });
+    return cart.toObject();
   }
 
-  #newId(){ return crypto.randomUUID(); }
-
-  async getAll(){ return readJSON(this.file); }
-
-  async getById(id){
-    const list = await this.getAll();
-    return list.find(c => c.id === id) || null;
-  }
-
-  async create(){
-    const list = await this.getAll();
-    const cart = { id: this.#newId(), products: [] };
-    list.push(cart);
-    await writeJSON(this.file, list);
+  async getById(id, { populate = false } = {}) {
+    let query = CartModel.findById(id);
+    if (populate) {
+      query = query.populate('products.product');
+    }
+    const cart = await query.lean();
     return cart;
   }
 
-  async addProduct(cid, pid, qty = 1){
-    const list = await this.getAll();
-    const idx = list.findIndex(c => c.id === cid);
-    if (idx === -1) return null;
-    const cart = list[idx];
-    const found = cart.products.find(p => p.product === pid);
-    if (found) found.quantity += Number(qty) || 1;
-    else cart.products.push({ product: pid, quantity: Number(qty) || 1 });
-    list[idx] = cart;
-    await writeJSON(this.file, list);
-    return cart;
+  async getAll() {
+    return CartModel.find().lean();
+  }
+
+  async addProduct(cid, pid, qty = 1) {
+    const cart = await CartModel.findById(cid);
+    if (!cart) return null;
+
+    const quantity = Number(qty) > 0 ? Number(qty) : 1;
+    const item = cart.products.find(p => p.product.toString() === pid);
+
+    if (item) item.quantity += quantity;
+    else cart.products.push({ product: pid, quantity });
+
+    await cart.save();
+    return cart.toObject();
+  }
+
+  async updateProducts(cid, productsArray) {
+    const cart = await CartModel.findById(cid);
+    if (!cart) return null;
+
+    cart.products = productsArray.map(p => ({
+      product: p.product,
+      quantity: Number(p.quantity) || 1
+    }));
+
+    await cart.save();
+    return cart.toObject();
+  }
+
+  async updateProductQuantity(cid, pid, qty) {
+    const cart = await CartModel.findById(cid);
+    if (!cart) return null;
+
+    const item = cart.products.find(p => p.product.toString() === pid);
+    if (!item) return null;
+
+    item.quantity = Number(qty) || item.quantity;
+    await cart.save();
+    return cart.toObject();
+  }
+
+  async deleteProduct(cid, pid) {
+    const cart = await CartModel.findById(cid);
+    if (!cart) return null;
+
+    cart.products = cart.products.filter(
+      p => p.product.toString() !== pid
+    );
+    await cart.save();
+    return cart.toObject();
+  }
+
+  async clearCart(cid) {
+    const cart = await CartModel.findById(cid);
+    if (!cart) return null;
+
+    cart.products = [];
+    await cart.save();
+    return cart.toObject();
   }
 }
