@@ -155,6 +155,34 @@ code {
   opacity: 0.7;
 }
 
+.cart-button-container {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.cart-button {
+  display: inline-block;
+  padding: 10px 20px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #7a42f4, #b17fff);
+  color: #fff;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 0 12px rgba(183, 127, 255, 0.3);
+}
+
+.cart-button:hover {
+  background: linear-gradient(135deg, #a066ff, #d0a3ff);
+  box-shadow: 0 0 20px rgba(192, 128, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.cart-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 10px rgba(128, 0, 255, 0.4);
+}
+
 /* Layout principal */
 
 .cart-layout {
