@@ -5,11 +5,11 @@ import { engine } from 'express-handlebars';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 
-import productsRouter from './src/routes/products.router.js';
-import cartsRouter from './src/routes/carts.router.js';
-import viewsRouter from './src/routes/views.router.js';
-import ProductManager from './src/managers/ProductManager.js';
-import { connectDB } from './src/config/db.js';
+import productsRouter from './routes/products.router.js';
+import cartsRouter from './routes/carts.router.js';
+import viewsRouter from './routes/views.router.js';
+import ProductManager from './managers/ProductManager.js';
+import { connectDB } from './config/db.js';
 
 const __dirname = path.resolve();
 const app = express();

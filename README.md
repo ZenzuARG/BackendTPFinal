@@ -238,5 +238,4 @@ Si el usuario ingresa por primera vez y no tiene esa cookie, el servidor crea un
 ## 👤 Autor
 
 **Zenon Zuliani**  
-Administrador de Bases de Datos · Desarrollador Backend  
 Proyecto realizado como **entrega final de Backend en Coderhouse**.
