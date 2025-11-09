@@ -1,8 +1,8 @@
 {
-  "name": "backend-tp-entrega2",
+  "name": "backend-tp-final",
   "version": "1.0.0",
-  "description": "Entrega 2 - Handlebars + Socket.IO (Productos tiempo real)",
-  "main": "app.js",
+  "description": "Entrega Final - Profesionalizando la Base de Datos (MongoDB + Handlebars + Endpoints)",
+  "main": "src/app.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon src/app.js",
@@ -17,6 +17,6 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "nodemon": "^3.1.4"
   }
 }
